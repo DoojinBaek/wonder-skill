@@ -1,0 +1,163 @@
+<!-- An example of the voice and the layouts: the approved AdaLN explanation (2026-10-17),
+     rewritten in ~다 체 with this skill's theme. It shows the parts of deck.html you write after
+     new-deck.mjs has made the head: the live elements, then the slides. Read it for the way
+     slides connect, how a formula is introduced, and how the layouts are written. Don't copy
+     its figures or its topic. -->
+
+<script type="module">
+const css = getComputedStyle(document.documentElement);
+const V = n => css.getPropertyValue(n).trim();
+const FONT = '"IBM Plex Sans KR", sans-serif';
+
+// The running figure: the same numbers on a number line, from slide 3 on.
+const mean = a => a.reduce((s, v) => s + v, 0) / a.length;
+const norm = a => { const m = mean(a), sd = Math.sqrt(mean(a.map(v => (v - m) ** 2)) + 1e-5); return a.map(v => (v - m) / sd); };
+const row = (vals, color, W) => {
+  const H = 96, lo = -4, hi = 9, X = v => 24 + (v - lo) / (hi - lo) * (W - 48);
+  const ticks = [-2, 0, 2, 4, 6, 8].map(v => `<line x1="${X(v)}" x2="${X(v)}" y1="40" y2="56" stroke="#c9ced6" stroke-width="2"/>` +
+    `<text x="${X(v)}" y="88" text-anchor="middle" font-size="22" font-family='${FONT}' fill="#9aa1ab">${v}</text>`).join('');
+  const dots = vals.map(v => `<circle cx="${X(v).toFixed(1)}" cy="48" r="12" fill="${color}" fill-opacity=".85"/>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block"><line x1="24" x2="${W - 24}" y1="48" y2="48" stroke="#c9ced6" stroke-width="3"/>${ticks}${dots}</svg>`;
+};
+
+customElements.define('dot-row', class extends HTMLElement {
+  connectedCallback() {
+    if (this.shadowRoot) return;
+    const x = this.dataset.x.split(',').map(Number), step = +this.dataset.step;
+    const g = +(this.dataset.gamma || 1), b = +(this.dataset.beta || 0);
+    const v = step === 0 ? x : norm(x).map(z => step === 1 ? z : step === 2 ? z * g : z * g + b);
+    this.attachShadow({ mode: 'open' }).innerHTML = `<style>:host { display: block; }</style>` + row(v, step === 0 ? '#9aa1ab' : V('--accent'), 640);
+  }
+});
+
+customElements.define('ln-compare', class extends HTMLElement {
+  connectedCallback() {
+    if (this.shadowRoot) return;
+    const z = norm(this.dataset.x.split(',').map(Number));
+    const root = this.attachShadow({ mode: 'open' });
+    root.innerHTML = `<style>
+      :host { display: block; font: 32px/1.4 ${FONT}; color: ${V('--ink')}; }
+      .grid { display: grid; grid-template-columns: 320px 1fr; column-gap: 36px; row-gap: 8px; align-items: center; }
+      .lab { font-weight: 600; } .lab small { display: block; font-weight: 400; font-size: 27px; color: ${V('--muted')}; }
+      .ctl { display: flex; align-items: center; gap: 28px; margin-top: 22px; }
+      input { width: 640px; accent-color: ${V('--alt')}; }
+      .mono { font-family: "IBM Plex Mono", monospace; font-size: 30px; }</style>
+      <div class="grid">
+        <div class="lab">LayerNorm<small>γ = 1.6, β = 0.8로 고정</small></div><div class="r1"></div>
+        <div class="lab" style="color:${V('--alt')}">AdaLN<small class="gb"></small></div><div class="r2"></div>
+      </div>
+      <div class="ctl"><span>timestep t</span><input type="range" min="0" max="1000" step="10" value="800"><span class="mono tv"></span></div>`;
+    const input = root.querySelector('input');
+    root.querySelector('.r1').innerHTML = row(z.map(v => v * 1.6 + 0.8), V('--accent'), 1100);
+    const draw = () => {
+      const t = +input.value, g = 0.5 + 1.2 * t / 1000, b = 2 - 2.5 * t / 1000;   // illustrative γ(t), β(t)
+      root.querySelector('.r2').innerHTML = row(z.map(v => v * g + b), V('--alt'), 1100);
+      root.querySelector('.gb').textContent = `γ(t) = ${g.toFixed(2)}, β(t) = ${b.toFixed(2)}`;
+      root.querySelector('.tv').textContent = `t = ${t}`;
+    };
+    input.oninput = draw;
+    draw();
+  }
+});
+
+// Five steps of one denoising run, drawn with a fixed seed so every render is the same.
+customElements.define('noise-strip', class extends HTMLElement {
+  connectedCallback() {
+    if (this.shadowRoot) return;
+    const steps = [1000, 750, 500, 250, 0];
+    const root = this.attachShadow({ mode: 'open' });
+    root.innerHTML = `<style>:host { display: block; }
+      .row { display: flex; justify-content: space-between; }
+      figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 14px; font: 28px/1.3 ${FONT}; color: ${V('--muted')}; }
+      canvas { width: 250px; height: 250px; border-radius: 18px; image-rendering: pixelated; }</style>
+      <div class="row">${steps.map(t => `<figure><canvas width="64" height="64"></canvas><figcaption>t = ${t}</figcaption></figure>`).join('')}</div>`;
+    let s = 7;
+    const rnd = () => { s = s + 0x6D2B79F5 | 0; let x = Math.imul(s ^ s >>> 15, 1 | s); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; };
+    const gauss = () => Math.sqrt(-2 * Math.log(1 - rnd())) * Math.cos(2 * Math.PI * rnd());
+    root.querySelectorAll('canvas').forEach((c, k) => {
+      const u = steps[k] / 1000, a = Math.sqrt(1 - 0.98 * u * u), b = Math.sqrt(1 - a * a);   // signal and noise weights
+      const g = c.getContext('2d'), img = g.createImageData(64, 64);
+      for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
+        const clean = Math.hypot(x - 32, y - 34) < 18 ? -0.8 : 0.8;
+        const p = Math.max(0, Math.min(255, 128 + 110 * (a * clean + b * gauss()))), i = (y * 64 + x) * 4;
+        img.data[i] = img.data[i + 1] = img.data[i + 2] = p; img.data[i + 3] = 255;
+      }
+      g.putImageData(img, 0, 0);
+    });
+  }
+});
+</script>
+
+<section class="slide title">
+  <h1>AdaLN (Adaptive Layer Normalization)</h1>
+  <p class="answer">AdaLN은 LayerNorm이 숫자들을 표준 크기로 맞춘 뒤 다시 늘리고 옮길 때 쓰는 두 값 γ와 β를, 조건을 보고 그때그때 계산하는 방법이다. DiT와 Stable Diffusion 3는 지금이 몇 번째 생성 단계인지를 이 방법으로 모든 층에 알려 준다.</p>
+  <p class="meta">W. Peebles, S. Xie. Scalable Diffusion Models with Transformers (ICCV 2023) · 2026-10-17 · Wonder</p>
+</section>
+
+<section class="slide">
+  <h2>Diffusion 모델은 지금이 몇 번째 단계인지 알아야 한다</h2>
+  <div class="text">
+    <p>Diffusion 모델은 노이즈로 가득한 그림에서 시작해 노이즈를 조금씩 걷어 낸다. 단계마다 다른 네트워크를 쓰지 않고, 같은 네트워크를 수십 번 다시 쓴다.</p>
+    <p>그런데 단계마다 할 일이 다르다. 초반에는 큰 윤곽을 잡고, 막바지에는 가는 선과 질감을 다듬는다. 그래서 네트워크는 <b>지금이 몇 번째 단계인지(timestep, t)</b>를 알아야 한다. 그러면 t를 네트워크 안에 어떻게 넣을까? 가장 널리 쓰는 답이 AdaLN이고, 그 바탕은 LayerNorm이다.</p>
+  </div>
+  <div class="fig">
+    <noise-strip></noise-strip>
+    <p class="note">같은 네트워크가 왼쪽에서 오른쪽으로 다섯 번 쓰인다. 그림은 설명을 위해 만든 것이다.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <h2>LayerNorm은 숫자들을 표준 크기로 맞춘 뒤 γ와 β로 다시 편다</h2>
+  <div class="side">
+    <div class="text">
+      <p>네트워크 안에서 이미지 조각 하나는 숫자 수백 개로 표현된다. 층을 여러 번 지나면 이 숫자들이 너무 커지거나 한쪽으로 쏠린다. LayerNorm은 층마다 이것을 바로잡는다.</p>
+      <p>먼저 평균을 0, 퍼짐을 1로 맞춘다(①). 이때 원래 크기 정보는 사라진다. 그다음 γ배로 넓히고(②) β만큼 옮긴다(③).</p>
+      <p><b>γ(scale)와 β(shift)는 학습으로 정해지고, 학습이 끝나면 고정된다.</b> t가 몇이든 같은 값을 쓴다.</p>
+    </div>
+    <div class="fig">
+      <div class="stack">
+        <p class="label">원래 숫자</p><dot-row data-x="2.1,3.4,3.9,4.6,5.2,6.0,6.8,8.0" data-step="0"></dot-row>
+        <p class="label">① 평균 0, 퍼짐 1</p><dot-row data-x="2.1,3.4,3.9,4.6,5.2,6.0,6.8,8.0" data-step="1"></dot-row>
+        <p class="label">② γ = 1.6배</p><dot-row data-x="2.1,3.4,3.9,4.6,5.2,6.0,6.8,8.0" data-step="2" data-gamma="1.6"></dot-row>
+        <p class="label">③ β = 0.8 이동</p><dot-row data-x="2.1,3.4,3.9,4.6,5.2,6.0,6.8,8.0" data-step="3" data-gamma="1.6" data-beta="0.8"></dot-row>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <h2>AdaLN은 γ와 β를 t를 보고 그때그때 정한다</h2>
+  <div class="text">
+    <p>고정돼 있던 γ와 β를 t에 맡기는 것이 AdaLN의 전부다. t를 움직여 보면 위 줄의 LayerNorm은 t와 상관없이 같은 출력을 내고, 아래 줄의 AdaLN은 <b>같은 입력을 t에 따라 넓히거나 좁히고 옮긴다.</b> 다음 층은 이 차이를 보고 지금이 몇 번째 단계인지 안다.</p>
+  </div>
+  <div class="fig">
+    <ln-compare data-x="2.1,3.4,3.9,4.6,5.2,6.0,6.8,8.0"></ln-compare>
+    <p class="note">γ(t)와 β(t)는 설명을 위해 정한 값이다. 실제 모델에서는 학습된다.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <h2>γ와 β는 작은 신경망이 t에서 계산한다</h2>
+  <div class="text">
+    <p>t를 먼저 벡터로 바꾸고 작은 신경망에 넣으면 γ와 β가 나온다. 앞 그림에서는 γ와 β를 숫자 하나로 그렸지만, <b>실제로는 채널마다 하나씩 있다.</b> DiT-XL에서는 1152개씩이다.</p>
+  </div>
+  <div class="eq">
+    <div class="math display">\mathrm{AdaLN}(x, t) = \big(1 + \textcolor{#c05f0c}{\gamma(t)}\big) \odot \mathrm{LN}(x) + \textcolor{#c05f0c}{\beta(t)}</div>
+    <p class="terms"><span class="orange">주황</span>은 t에서 계산한 값이다. LN(x)는 평균 0, 퍼짐 1로 맞춘 x이고, ⊙는 채널마다 따로 곱한다는 뜻이다. 1을 더해 두었으니 γ가 0이면 LN(x)가 크기를 바꾸지 않고 그대로 나간다.</p>
+  </div>
+  <details><summary>이 작은 신경망들은 생각보다 크다</summary>
+    <p>DiT-XL/2는 블록이 28개이고, 블록마다 1152개짜리 벡터 6개(attention 앞과 MLP 앞에 γ, β, gate 하나씩)를 만든다. 이 Linear 층만 세어도 28 × (1152 × 6912 + 6912) ≈ 2.2억 개로, 모델 전체(약 6.75억 개)의 3분의 1쯤이다.</p>
+  </details>
+</section>
+
+<section class="slide">
+  <h2>AdaLN은 정규화 뒤의 조정만 조건에 맡긴다</h2>
+  <div class="text">
+    <p>평균과 분산은 여전히 입력 숫자들에서 계산한다. t가 바꾸는 것은 정규화가 끝난 뒤의 γ와 β뿐이다. 그래서 t처럼 그림 전체에 해당하는 조건을 넣기에 잘 맞고, 단어 하나하나처럼 위치마다 다른 정보는 attention으로 넣는다.</p>
+  </div>
+  <div class="refs">
+    <p>W. Peebles, S. Xie. Scalable Diffusion Models with Transformers (DiT). ICCV 2023. arXiv:2212.09748</p>
+    <p>J. L. Ba, J. R. Kiros, G. E. Hinton. Layer Normalization. arXiv:1607.06450, 2016</p>
+    <p>논문에서 온 것: 수식, DiT 블록 구조. 직접 만들거나 계산한 것: 노이즈 그림, γ(t)와 β(t)의 값(설명용), 파라미터 수(DiT-XL/2 설정으로 계산).</p>
+  </div>
+</section>

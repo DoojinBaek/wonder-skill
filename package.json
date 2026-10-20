@@ -1,0 +1,21 @@
+{
+  "name": "wonder-skill",
+  "private": true,
+  "type": "module",
+  "description": "A Claude Code / Codex skill that explains topics as HTML slide decks you can present and edit in the browser",
+  "bin": {
+    "deck": "skill/scripts/deck.mjs"
+  },
+  "scripts": {
+    "test": "node tests/run.mjs",
+    "test:build": "node tests/build.mjs",
+    "test:aside": "CHROME=/Applications/Aside.app/Contents/MacOS/Aside node tests/run.mjs",
+    "build": "node scripts/build.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "1.48.2"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.0"
+  }
+}

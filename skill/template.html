@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Presentation title</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root {
+    --ink: #16181d;
+    --muted: #6b7280;
+    --accent: #2f5bea;
+    --soft: #eef2fd;
+    --line: #e5e7eb;
+    --alt: #b45309;
+    --alt-soft: #fdf3e2;
+  }
+  body { margin: 0; background: #e9e9ec; }
+
+  .slide {
+    width: 1920px; height: 1080px;
+    padding: 110px 140px;
+    box-sizing: border-box;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: #fff;
+    color: var(--ink);
+    font: 400 40px/1.45 "Pretendard", -apple-system, sans-serif;
+    word-break: keep-all; overflow-wrap: break-word;
+    display: flex; flex-direction: column; gap: 40px;
+  }
+  .slide h1 { font-size: 96px; line-height: 1.15; font-weight: 800; margin: 0; letter-spacing: -0.02em; }
+  .slide h2 { font-size: 64px; line-height: 1.2; font-weight: 750; margin: 0; letter-spacing: -0.015em; }
+  .slide h3 { font-size: 44px; font-weight: 700; margin: 0; }
+  .slide p { margin: 0; }
+  .slide ul, .slide ol { margin: 0; padding-left: 1.1em; }
+  .slide li + li { margin-top: 18px; }
+  .slide blockquote { margin: 0; padding-left: 32px; border-left: 6px solid var(--line); color: var(--muted); }
+  .slide code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: var(--soft); padding: 0.08em 0.3em; border-radius: 6px; }
+  .slide pre { margin: 0; padding: 24px 32px; background: var(--soft); border-radius: 12px; font-size: 30px; line-height: 1.5; white-space: pre-wrap; }
+  .slide pre code { background: none; padding: 0; font-size: inherit; }
+  .slide a { color: var(--accent); }
+  .slide .muted { color: var(--muted); }
+  .slide .hl { color: var(--accent); }
+  .slide .kicker { font-size: 30px; font-weight: 700; color: var(--accent); letter-spacing: 0.06em; }
+  .slide .lead { font-size: 46px; color: var(--muted); }
+  .slide .small { font-size: 32px; }
+
+  .slide.title { justify-content: center; background: var(--soft); }
+  .slide.title .sub { font-size: 44px; color: var(--muted); }
+  .slide.title .meta { font-size: 32px; color: var(--muted); margin-top: 40px; }
+  .slide.center { justify-content: center; align-items: center; text-align: center; }
+  .slide.section { justify-content: center; background: var(--accent); color: #fff; }
+  .slide.section .kicker, .slide.section .lead { color: rgba(255, 255, 255, 0.75); }
+
+  .slide .cols { display: flex; gap: 80px; flex: 1; min-height: 0; }
+  .slide .cols > * { flex: 1; min-width: 0; }
+  .slide .cols > div > * + * { margin-top: 24px; }
+  .slide .cols > .wide { flex: 1.6; }
+  .slide .card { background: var(--soft); border-radius: 24px; padding: 40px 48px; display: flex; flex-direction: column; gap: 20px; font-size: 36px; }
+  .slide div.card > * + * { margin-top: 0; }
+  .slide .card h3 { font-size: 40px; color: var(--accent); }
+  .slide .card.alt { background: var(--alt-soft); }
+  .slide .card.alt h3 { color: var(--alt); }
+  .slide .callout { border-left: 8px solid var(--accent); padding: 6px 0 6px 36px; font-size: 42px; font-weight: 600; }
+  .slide .stat { font-size: 120px; line-height: 1; font-weight: 800; color: var(--accent); letter-spacing: -0.02em; }
+  .slide .foot { margin-top: auto; font-size: 26px; color: var(--muted); }
+  .slide figure { margin: 0; display: flex; flex-direction: column; gap: 16px; }
+  .slide figure img, .slide figure svg { width: 100%; height: auto; }
+  .slide figcaption { font-size: 28px; color: var(--muted); }
+
+  .slide table { border-collapse: collapse; font-size: 34px; }
+  .slide th, .slide td { padding: 14px 28px; border-bottom: 2px solid var(--line); text-align: left; }
+  .slide th { color: var(--muted); font-weight: 600; }
+  .slide tr.hl td { background: var(--soft); font-weight: 650; }
+
+  .slide div.shape[data-shape] { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 12px 20px; box-sizing: border-box; }
+  .slide div.shape[data-shape] > * { margin: 0; }
+
+  .slide .math.display { font-size: 52px; text-align: center; }
+  .slide .eqs { display: flex; flex-direction: column; gap: 32px; }
+  .slide .eqs > div { display: flex; align-items: center; gap: 48px; }
+  .slide .eqs .eqlabel { width: 260px; flex: none; font-size: 34px; font-weight: 700; color: var(--accent); }
+  .slide .eqs .math.display { flex: 1; min-width: 0; font-size: 44px; text-align: left; margin: 0; }
+  .slide .eqs .katex-display { margin: 0; }
+  .slide .eqs .katex-display > .katex { text-align: left; }
+  .slide details { font-size: 32px; }
+  .slide summary { display: inline-block; list-style: none; cursor: pointer; padding: 0.2em 0.9em; border: 3px solid var(--accent); border-radius: 14px; color: var(--accent); font-weight: 650; }
+  .slide summary::-webkit-details-marker { display: none; }
+  .slide summary::after { content: " ▸"; }
+  .slide details[open] > summary::after { content: " ▾"; }
+  .slide details[open] > summary { margin-bottom: 20px; }
+  .slide button, .slide input, .slide select, .slide textarea { font: inherit; font-size: 0.85em; color: inherit; }
+  .slide button { padding: 0.3em 1em; border: 3px solid var(--accent); border-radius: 14px; background: #fff; color: var(--accent); font-weight: 650; cursor: pointer; }
+  .slide button:hover { background: var(--soft); }
+  .slide input, .slide select, .slide textarea { padding: 0.25em 0.5em; border: 2px solid var(--line); border-radius: 10px; }
+  .slide input[type=range] { accent-color: var(--accent); padding: 0; border: 0; }
+  .slide .pageno { position: absolute; right: 60px; bottom: 40px; font-size: 24px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main class="deck" data-size="1920x1080">
+
+  <!-- 1. Cover -->
+  <section class="slide title">
+    <h1>Presentation title</h1>
+    <p class="sub">A one-line subtitle</p>
+    <p class="meta">Name · Affiliation · Date</p>
+  </section>
+
+  <!-- 2. Key points -->
+  <section class="slide">
+    <h2>Slide title</h2>
+    <ul>
+      <li>First point</li>
+      <li>Second point</li>
+      <li>Third point</li>
+    </ul>
+    <aside class="notes">Speaker notes (not shown on the slide)</aside>
+  </section>
+
+  <!-- 3. Two cards -->
+  <section class="slide">
+    <h2>The title states the slide's claim as a sentence</h2>
+    <div class="cols">
+      <div class="card alt">
+        <h3>Problem</h3>
+        <p>What is hard today</p>
+      </div>
+      <div class="card">
+        <h3>Idea</h3>
+        <p>What this talk proposes</p>
+      </div>
+    </div>
+    <p class="callout">One sentence the audience should remember</p>
+  </section>
+
+  <!-- 4. Two columns (text + figure) -->
+  <section class="slide">
+    <h2>Text and figure</h2>
+    <div class="cols">
+      <div>
+        <p>The explanation goes on the left.</p>
+      </div>
+      <figure>
+        <svg viewBox="0 0 400 240" role="img" aria-label="Example chart">
+          <rect x="40" y="140" width="60" height="80" fill="#c7d2fe"/>
+          <rect x="140" y="90" width="60" height="130" fill="#93a5f5"/>
+          <rect x="240" y="40" width="60" height="180" fill="#2f5bea"/>
+          <line x1="20" y1="220" x2="380" y2="220" stroke="#9ca3af" stroke-width="2"/>
+        </svg>
+        <figcaption>Figure caption</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 5. TeX example -->
+  <section class="slide">
+    <h2>Equations</h2>
+    <p>An inline equation such as <span class="math">\mathcal{L}(\theta)</span> is written like this.</p>
+    <div class="eqs">
+      <div><p class="eqlabel">Loss</p><div class="math display">\mathcal{L}(\theta) = \mathbb{E}_{x \sim p}\left[-\log q_\theta(x)\right]</div></div>
+      <div><p class="eqlabel">Update</p><div class="math display">\theta \leftarrow \theta - \eta \nabla_\theta \mathcal{L}</div></div>
+    </div>
+  </section>
+
+</main>
+<script src="deck-edit.js"></script>
+</body>
+</html>

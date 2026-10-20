@@ -1,0 +1,59 @@
+/* wonder theme. scripts/new-deck.mjs copies this into deck.html's <style>;
+   the base CSS that `deck build` adds comes before it, so these rules only adjust it.
+   Two meaning colors: blue (--accent) for the main object, orange (--alt) for what comes
+   from outside it (a condition, a competing method). Say in the deck what each one means. */
+:root {
+  --ink: #1d2026;
+  --muted: #6b7280;
+  --accent: #2f5fb3;
+  --soft: #edf2fa;
+  --line: #e3e6ea;
+  --alt: #c05f0c;
+  --alt-soft: #fbefe3;
+}
+.slide { font-family: "IBM Plex Sans KR", -apple-system, sans-serif; font-size: 36px; line-height: 1.55; gap: 44px; }
+.slide code, .slide pre, .slide .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+.slide h2 { font-size: 56px; font-weight: 700; line-height: 1.28; letter-spacing: -0.01em; }
+.slide p { max-width: 1400px; }
+
+/* the one phrase that carries the slide */
+.slide b { font-weight: 700; background: linear-gradient(transparent 60%, rgba(47, 95, 179, .2) 60%); }
+.slide .blue { color: var(--accent); }
+.slide .orange { color: var(--alt); }
+
+/* a text block and a figure block; the figure takes the space that is left */
+.slide .text { display: flex; flex-direction: column; gap: 26px; }
+.slide .fig { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 18px; }
+.slide .fig > svg, .slide .fig > img { display: block; max-width: 100%; max-height: 100%; margin: 0 auto; }
+.slide .note { font-size: 26px; line-height: 1.45; color: var(--muted); }
+
+/* side: text on the left, figure on the right */
+.slide .side { flex: 1; min-height: 0; display: grid; grid-template-columns: 660px 1fr; column-gap: 80px; align-items: start; }
+.slide .side > .fig { align-self: stretch; }
+
+/* stack: the same figure in rows, all visible, compared at a glance */
+.slide .stack { display: grid; grid-template-columns: 230px 1fr; column-gap: 36px; row-gap: 26px; align-items: center; }
+.slide .stack > .label { font-size: 30px; font-weight: 600; line-height: 1.35; }
+
+/* a formula, then one line on its colored terms */
+.slide .eq { display: flex; flex-direction: column; gap: 14px; }
+.slide .eq .math.display { font-size: 46px; text-align: left; margin: 0; }
+.slide .eq .katex-display { margin: 0; }
+.slide .eq .katex-display > .katex { text-align: left; }
+.slide .eq .terms { font-size: 30px; color: var(--muted); }
+
+/* folds: depth one click away */
+.slide details { font-size: 30px; color: var(--muted); }
+.slide summary { font-size: 28px; padding: 0.15em 0.8em; border-width: 2px; }
+.slide details[open] > summary { margin-bottom: 14px; }
+.slide details > p + p { margin-top: 12px; }
+
+/* cover: what it is, then a direct answer */
+.slide.title { background: #fff; gap: 36px; }
+.slide.title h1 { font-size: 84px; font-weight: 700; max-width: 1640px; }
+.slide.title .answer { font-size: 38px; line-height: 1.6; max-width: 1450px; }
+.slide.title .meta { font-size: 28px; color: var(--muted); margin-top: 0; }
+
+/* last slide: summary, then sources */
+.slide .refs { margin-top: auto; display: flex; flex-direction: column; gap: 10px; font-size: 26px; line-height: 1.45; color: var(--muted); }
+.slide .refs p { max-width: none; }
